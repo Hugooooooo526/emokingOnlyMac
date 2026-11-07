@@ -20,7 +20,7 @@
 暂时没有预编译版本，需要从源码构建：
 
 ```bash
-git clone <仓库地址> emoking
+git clone https://github.com/Hugooooooo526/emokingOnlyMac.git emoking
 cd emoking
 ./build.sh                # 生成 dist/EmoKing.app，约 1 分钟
 open dist/EmoKing.app     # 启动
