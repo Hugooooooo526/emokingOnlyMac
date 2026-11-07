@@ -358,8 +358,7 @@
       let { x, y, vx, vy } = q, t = 0;
       for (let i = 0; i <= SMOKE_KEYS; i++) {
         const k = i / SMOKE_KEYS;
-        // 烟头冒的烟先是细细一缕，升高了才散开；吐出来的烟一开始就散
-        const r = q.r0 + (q.r1 - q.r0) * (q.jet ? 1 - (1 - k) * (1 - k) : Math.pow(k, 1.5));
+        const r = q.r0 + (q.r1 - q.r0) * (1 - (1 - k) * (1 - k));
         // 靠近窗口边缘时淡掉，不让烟被窗口切出一条直线
         const edge = clamp(y / 90, 0, 1) * clamp((x + 10) / 60, 0, 1) * clamp((W + 10 - x) / 60, 0, 1);
         const a = i === 0 ? 0 : q.a0 * Math.pow(1 - k, 1.5) * edge;
@@ -517,7 +516,7 @@
           x: p.x - 1 + (Math.random() - 0.5) * 2, y: p.y - 4,
           vx: (Math.random() - 0.5) * 3, vy: -36 - Math.random() * 12,
           age: 0, life: 3.4 + Math.random() * 1.8,
-          r0: 2, r1: 28 + Math.random() * 14, a0: 0.5,
+          r0: 3, r1: 26 + Math.random() * 14, a0: 0.46,
           rot: Math.random() * 6, spin: (Math.random() - 0.5) * 0.5,
           spr: Math.floor(Math.random() * 4), seed: Math.random() * 10,
         }, n / due * dt);

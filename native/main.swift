@@ -40,6 +40,14 @@ final class SmokeView: NSView {
 
     private(set) var liveCount = 0
 
+    /// 当前正在播放的每团烟的显示缩放
+    var liveScales: [CGFloat] {
+        (layer?.sublayers ?? []).compactMap { l in
+            guard l.animation(forKey: "puff") != nil, let t = l.presentation()?.transform else { return nil }
+            return hypot(t.m11, t.m12)
+        }
+    }
+
     /// 一批烟共用一次提交；播完的图层留在树上（透明）等下次复用
     func spawn(_ items: [[String: Any]]) {
         CATransaction.begin()
@@ -60,22 +68,24 @@ final class SmokeView: NSView {
         let count = keys.count / 4
 
         let positions = (0..<count).map { NSValue(point: NSPoint(x: keys[$0 * 4] * s, y: bounds.height - keys[$0 * 4 + 1] * s)) }
-        let scales = (0..<count).map { keys[$0 * 4 + 2] * 2 * s / side }
+        // 缩放和旋转合成一条动画：分开写时，transform.rotation.z 会盖掉 transform.scale
+        let transforms = (0..<count).map { i -> NSValue in
+            let k = keys[i * 4 + 2] * 2 * s / side
+            let angle = CGFloat(rot + spin * life * Double(i) / Double(count - 1))
+            return NSValue(caTransform3D: CATransform3DRotate(CATransform3DMakeScale(k, k, 1), angle, 0, 0, 1))
+        }
         let alphas = (0..<count).map { keys[$0 * 4 + 3] }
 
         let move = CAKeyframeAnimation(keyPath: "position")
         move.values = positions
         move.calculationMode = .cubic
-        let grow = CAKeyframeAnimation(keyPath: "transform.scale")
-        grow.values = scales
+        let grow = CAKeyframeAnimation(keyPath: "transform")
+        grow.values = transforms
         let fade = CAKeyframeAnimation(keyPath: "opacity")
         fade.values = alphas
-        let turn = CABasicAnimation(keyPath: "transform.rotation.z")
-        turn.fromValue = rot
-        turn.toValue = rot + spin * life
 
         let group = CAAnimationGroup()
-        group.animations = [move, grow, fade, turn]
+        group.animations = [move, grow, fade]
         group.duration = life
         group.beginTime = CACurrentMediaTime() + num("delay")
 
@@ -168,10 +178,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
 
     func applicationDidFinishLaunching(_ note: Notification) {
         let id = Bundle.main.bundleIdentifier ?? ""
+        let showRequest = Notification.Name(id + ".show")
         if NSRunningApplication.runningApplications(withBundleIdentifier: id).count > 1 {
+            // 已经有一份在跑：让它把窗口显示出来。用通知是因为两份可能在不同路径，系统不会走 reopen
+            DistributedNotificationCenter.default().postNotificationName(
+                showRequest, object: nil, userInfo: nil, deliverImmediately: true)
             NSApp.terminate(nil)
             return
         }
+        DistributedNotificationCenter.default().addObserver(
+            self, selector: #selector(showPanel), name: showRequest, object: nil)
         buildPanel()
         buildWebView()
         buildStatusItem()
@@ -183,6 +199,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         #if EMOKING_TEST
         runSelfTest()
         #endif
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showPanel()
+        return false
+    }
+
+    @objc private func showPanel() {
+        if !panel.isVisible { toggleVisible() }
     }
 
     // MARK: 窗口

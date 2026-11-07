@@ -159,6 +159,9 @@ extension AppDelegate {
             await wait(3)
             let live = smokeView.liveCount
             check("烟雾在原生层播放", live > 10 && live <= 120, "\(live) 团")
+            let scales = smokeView.liveScales
+            let lo = scales.min() ?? 1, hi = scales.max() ?? 0
+            check("烟雾由细变粗", lo < 0.3 && hi > 0.6, String(format: "缩放 %.2f～%.2f", lo, hi))
             await snapSmoke("6-smoke-native")
             mark("passive"); await wait(13)
             let b0 = Double(await js("emoking.sim.burned"))!
@@ -205,6 +208,14 @@ extension AppDelegate {
             check("空闲后动画循环停止", busy == "0", busy)
             mark("idle"); log("stage idle")
             await wait(16)
+            // 窗口隐藏后再打开 App，窗口要回来
+            for (stage, name) in [("reopen-open", "open 命令"), ("reopen-second", "第二份进程")] {
+                toggleVisible()
+                check("隐藏窗口（\(name)）", !panel.isVisible)
+                mark(stage)
+                for _ in 0..<100 where !panel.isVisible { await wait(0.1) }
+                check("再次打开 App 显示窗口（\(name)）", panel.isVisible)
+            }
             mark("done"); log("done")
             NSApp.terminate(nil)
         }
