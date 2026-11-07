@@ -9,6 +9,8 @@ rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/web"
 xcrun swiftc -O -swift-version 5 -D EMOKING_TEST -sdk "$(xcrun --show-sdk-path)" \
   -target "$(uname -m)-apple-macos13.0" native/main.swift tests/selftest.swift -o "$APP/Contents/MacOS/EmoKing"
 cp native/Info.plist "$APP/Contents/Info.plist"
+# 换一个 bundle id，正式版开着也能跑测试
+plutil -replace CFBundleIdentifier -string local.emoking.smoke.selftest "$APP/Contents/Info.plist"
 cp web/index.html web/style.css web/sim.js web/render.js web/main.js "$APP/Contents/Resources/web/"
 codesign --force --sign - "$APP"
 
@@ -34,4 +36,6 @@ sample() {
 waitstage passive && sample 放着烧 11
 waitstage lit && sample 一直吸 20
 waitstage idle && sample 空闲 12
+waitstage reopen-open && open "$APP"
+waitstage reopen-second && EMOKING_OUT="$OUT" "$APP/Contents/MacOS/EmoKing"
 wait $PID || true

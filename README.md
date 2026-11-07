@@ -1,12 +1,16 @@
 # 吸烟模拟器 EmoKing
 
+[English](README.en.md) | 中文
+
 **没空下楼抽一根？屏幕右下角有。**
+
+**反正 vibe coding 也是耍手机，右下角放松一下？**
 
 一个 Mac 桌面小摆件：点一支虚拟的烟，让它在屏幕角落慢慢烧、冒烟、掉灰。
 
-没有烟味，不用找打火机，也不用下楼吹风。整个 App 只有 580 KB，不联网，不出声，不弹通知。
+没有烟味，不用找打火机，也不用下楼吹风。整个 App 不到 600 KB，不联网，不出声，不弹通知。
 
-<img src="docs/screenshot.png" width="340" alt="烟灰缸、打火机、烟盒和一支正在冒烟的烟">
+<img src="docs/demo.gif" width="340" alt="演示：拿烟、点烟、吸一口吐烟、抖灰、掐灭">
 
 ## 为什么你需要来一根
 
@@ -23,9 +27,21 @@
 
 ## 一分钟装好
 
-**只支持 macOS**，不支持 Windows 和 Linux。需要 macOS 13 或更高版本，以及 Xcode 命令行工具（`xcode-select --install`）。
+**只支持 macOS**（13 或更高版本），不支持 Windows 和 Linux。
 
-暂时没有预编译版本，从源码构建：
+### 方式一：直接下载
+
+1. 下载 [EmoKing-macos.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-macos.zip)，解压。
+2. 把 `EmoKing.app` 拖进“应用程序”文件夹。
+3. 第一次打开时系统会拦一下，因为这个 App 没有 Apple 开发者签名。选一种方式放行：
+   - 打开“系统设置 → 隐私与安全性”，往下找到 EmoKing，点“仍要打开”
+   - 或者在终端运行：`xattr -dr com.apple.quarantine /Applications/EmoKing.app`
+
+不放心的话，代码都在这里，可以用方式二自己构建。
+
+### 方式二：从源码构建
+
+需要 Xcode 命令行工具（`xcode-select --install`）。
 
 ```bash
 git clone https://github.com/Hugooooooo526/emokingOnlyMac.git emoking
@@ -34,11 +50,11 @@ cd emoking
 open dist/EmoKing.app     # 点上
 ```
 
-想天天抽，把 `dist/EmoKing.app` 拖进“应用程序”文件夹。
+### 装好之后
 
 App 没有 Dock 图标。启动后窗口出现在屏幕右下角，屏幕顶部菜单栏会多一个烟雾图标。
 
-目前只在 Apple M5、macOS 27 上实际运行过。构建产物同时包含 Apple 芯片和 Intel 版本，但 Intel 机器和较旧的 macOS 版本还没有实测，欢迎试完告诉我。
+目前只在 Apple M5、macOS 27 上实际运行过。App 同时包含 Apple 芯片和 Intel 版本，但 Intel 机器和较旧的 macOS 版本还没有实测，欢迎试完告诉我。
 
 ## 怎么抽
 
@@ -67,9 +83,9 @@ App 没有 Dock 图标。启动后窗口出现在屏幕右下角，屏幕顶部�
 
 | 指标 | 目标 | 实测 |
 |---|---|---|
-| 安装包 | <10 MB | 580 KB |
-| 启动到可交互 | <1 秒 | 0.64 秒 |
-| 抽烟时 CPU | <5% | 3.6%～3.9% |
+| 安装包 | <10 MB | 596 KB（zip 约 300 KB） |
+| 启动到可交互 | <1 秒 | 0.44～0.64 秒 |
+| 抽烟时 CPU | <5% | 3.3%～3.9% |
 | 空闲 CPU | 接近 0 | 鼠标不动时线程全部休眠；采样时最高 2.0% |
 | 内存 | 空闲约 30 MB | 约 60 MB（刚启动空闲时） |
 
@@ -79,8 +95,9 @@ App 没有 Dock 图标。启动后窗口出现在屏幕右下角，屏幕顶部�
 ## 已知限制
 
 - 点过窗口后，空格和打字都会被它接收，要点一下别的窗口，键盘才会回到原来的 App。
-- 刘海屏上菜单栏太满时，图标可能被挤掉。这时可以在物件上右键打开同一个菜单；如果窗口也隐藏了，只能用活动监视器结束 EmoKing 再重新打开。
+- 刘海屏上菜单栏太满时，图标可能被挤掉。这时可以在物件上右键打开同一个菜单；窗口隐藏了就再打开一次 App，窗口会回来。
 - 暂时不支持开机自启。
+- App 界面只有中文。
 
 ## 技术实现
 
@@ -103,7 +120,9 @@ node --test tests/sim.test.js      # 游戏规则，需要 Node.js 18+
 scripts/selftest.sh /tmp/emoking   # 在真实窗口里跑完整流程，并采样 CPU 和内存
 ```
 
-`selftest.sh` 用单独的测试构建和单独的存档，不影响正式数据。
+`selftest.sh` 用单独的测试构建和单独的存档，不影响正式数据。部分检查依赖真实计时，机器很忙时可能偶发失败，建议单独运行。
+
+`scripts/package.sh` 会生成发布用的 `dist/EmoKing-macos.zip`。
 
 ## 许可证
 
