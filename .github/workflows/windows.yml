@@ -1,0 +1,18 @@
+name: Windows build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [windows]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo build --release
+        working-directory: src-tauri
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EmoKing-windows
+          path: src-tauri/target/release/emoking.exe
