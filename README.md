@@ -91,3 +91,7 @@ scripts/selftest.sh /tmp/emoking   # 在真实窗口里跑完整流程，并采�
 ```
 
 `selftest.sh` 用单独的测试构建和单独的存档，不影响正式数据。
+
+## 许可证
+
+[MIT](LICENSE)
