@@ -1,0 +1,49 @@
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: -apple-system, "PingFang SC", sans-serif;
+}
+
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+#base, #smoke { pointer-events: none; }
+
+#hint, #today {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+  color: #fff;
+  background: rgba(20, 20, 24, .72);
+  border-radius: 999px;
+}
+
+#hint {
+  top: 71%;
+  padding: .35em .9em;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity .25s;
+}
+
+#hint.show { opacity: 1; }
+
+#today {
+  bottom: 3px;
+  padding: .1em .75em;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
