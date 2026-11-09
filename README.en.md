@@ -6,7 +6,7 @@ English | [中文](README.md)
 
 **You're on your phone during vibe coding anyway. Why not unwind in the corner of your screen?**
 
-A tiny macOS desk toy: light a virtual cigarette and let it slowly burn, smoke and drop ash in the corner of your screen.
+A tiny macOS / Windows desk toy: light a virtual cigarette and let it slowly burn, smoke and drop ash in the corner of your screen.
 
 No smell, no hunting for a lighter, no standing outside in the wind. The whole app is under 600 KB, with no network access, no sound and no notifications.
 
@@ -20,6 +20,7 @@ No smell, no hunting for a lighter, no standing outside in the wind. The whole a
 - **How many today?** The ashtray doesn't lie: butts and ash stay in it until the next day.
 - **Worried it'll get in the way?** Clicks pass straight through the transparent parts of the window, so you can smoke and code at the same time.
 - **Worried it'll slow your Mac down?** Under 4% CPU while smoking, and next to nothing the rest of the time.
+- **Fancy a different brand?** Five packs and four Zippos, and you can mix and match.
 
 It's just a desk toy, not a quit-smoking tool.
 
@@ -27,9 +28,19 @@ It's just a desk toy, not a quit-smoking tool.
 
 ## Install in a minute
 
-**macOS only** (13 or later). Windows and Linux are not supported.
+Supports **macOS 13+** and **Windows 10 / 11 (64-bit)**. Linux is not supported.
 
-### Option 1: Download
+### Windows: unzip and run
+
+1. Download [EmoKing-windows.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-windows.zip) and **extract it first**. Don't run it from inside the zip.
+2. Double-click `EmoKing.exe`. The window appears in the bottom-right corner; nothing to install.
+3. If you see "Windows protected your PC", click "More info" → "Run anyway". The app isn't code-signed.
+
+Controls live in the tray icon (it may be hidden under "^"); right-clicking the pack or lighter opens the same menu. Data: `%LOCALAPPDATA%\EmoKing\state.json`.
+
+To build it yourself, run `.\windows\build.ps1 -Output (Join-Path (Get-Location) 'EmoKing.exe')` in Windows PowerShell. You need Node.js on PATH; the C# compiler comes with the built-in .NET Framework.
+
+### Mac option 1: Download
 
 1. Download [EmoKing-macos.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-macos.zip) and unzip it.
 2. Drag `EmoKing.app` into your Applications folder.
@@ -37,9 +48,9 @@ It's just a desk toy, not a quit-smoking tool.
    - Open System Settings → Privacy & Security, scroll down to EmoKing and click "Open Anyway"
    - Or run this in Terminal: `xattr -dr com.apple.quarantine /Applications/EmoKing.app`
 
-If you'd rather not trust a download, all the code is here and you can build it yourself with Option 2.
+If you'd rather not trust a download, all the code is here and you can build it yourself with Mac option 2.
 
-### Option 2: Build from source
+### Mac option 2: Build from source
 
 Requires the Xcode Command Line Tools (`xcode-select --install`).
 
@@ -68,7 +79,8 @@ The app's interface is in Chinese only, but you only need three steps: **click t
 | Click the burning tip | Flick the ash |
 | Click the ashtray | Stub it out; an unlit cigarette goes back in the pack |
 | Drag the pack, lighter or ashtray | Move the window |
-| Right-click an object, or click the menu bar icon | Hide, keep on top, window size, smoke amount, quit |
+| Click 外观 in the window (Mac) or use the right-click menu (Windows) | Change the pack and Zippo style |
+| Right-click an object, or click the menu bar / tray icon | Hide, keep on top, window size, smoke amount, quit |
 
 Things you'll find out sooner or later:
 
@@ -79,12 +91,13 @@ Things you'll find out sooner or later:
 
 ## Changelog
 
-### v0.1.1
+### v0.2.0
 
-- **Smoke fixed:** smoke from the tip now starts as a thin wisp and spreads out as it rises. In v0.1.0 every puff appeared at full size; now it grows over time.
-- **Easier to get the window back:** if the window is hidden, open the app again (double-click, Spotlight or `open`) and the window comes back, without starting a second copy.
-- **Direct download:** the release includes a prebuilt `EmoKing-macos.zip`, so you don't have to build it yourself.
-- Added a demo GIF and this English README.
+- **New Windows version:** download the zip, extract it and double-click `EmoKing.exe`. No install and no WebView2 needed.
+- **New styles:** five packs (Lucky Strike green, Seven Stars white, Mild Seven blue, Marlboro red, Camel classic) and four Zippos (brushed silver, vintage brass, matte black, candy red). Pick the cigarette and lighter separately; your choice is remembered. On Mac click 外观 in the window; on Windows use the right-click menu.
+- **Smoke fixed:** smoke from the tip now starts as a thin wisp and spreads out as it rises. In v0.1.0 every puff appeared at full size.
+- **Easier to get the window back:** on Mac, if the window is hidden, open the app again and the window comes back without starting a second copy.
+- Prebuilt Mac and Windows packages in the release; added a demo GIF and this English README.
 
 ### v0.1.0
 
@@ -92,7 +105,7 @@ Things you'll find out sooner or later:
 
 ## Acceptance results
 
-Tested on an Apple M5 with macOS 27.
+These are Mac numbers, tested on an Apple M5 with macOS 27. The Windows version hasn't been measured the same way.
 
 | Metric | Target | Measured |
 |---|---|---|
@@ -111,16 +124,18 @@ Tested on an Apple M5 with macOS 27.
 - On notched MacBooks, a crowded menu bar can hide the icon. Right-click an object to open the same menu. If the window is hidden, open the app again and the window comes back.
 - There is no launch at login yet.
 - The app's interface is in Chinese only.
+- The Windows version hasn't been fully checked on the maintainer's own Windows machine yet. Issues welcome.
 
 ## How it works
 
-A native Swift shell with WKWebView and no third-party dependencies.
+Mac: a native Swift shell with WKWebView. Windows: a C# shell that runs the same JS rules and drawing code in the system's built-in Chakra engine and shows them in a GDI layered window. No third-party dependencies on either.
 
 - `web/sim.js`: all the game rules, no DOM access
 - `web/render.js`: the visuals, plus computing each puff's full path when it's born
 - `web/main.js`: input, the main loop and saving
 - `native/main.swift`: transparent window, click-through, menu bar, smoke playback with Core Animation
-- Data: `~/Library/Application Support/EmoKing/state.json`
+- `windows/`: Windows floating window, tray menu and drawing bridge; build with `build.ps1`
+- Data: Mac `~/Library/Application Support/EmoKing/state.json`, Windows `%LOCALAPPDATA%\EmoKing\state.json`
 
 Each puff's path is computed once in JS and handed to Core Animation, so the web view doesn't have to commit a frame for every step of the smoke. While the cigarette burns quietly, the loop runs just 5 times a second, and it stops completely when nothing is moving.
 
@@ -135,7 +150,7 @@ scripts/selftest.sh /tmp/emoking   # runs the full flow in a real window and sam
 
 `selftest.sh` uses a separate test build and separate save data, so your real data isn't touched. Some checks depend on real timing and can fail occasionally on a busy machine, so run it on its own.
 
-`scripts/package.sh` creates `dist/EmoKing-macos.zip` for releases.
+`scripts/package.sh` creates `dist/EmoKing-macos.zip` for releases. The Windows package is built by GitHub Actions (`.github/workflows/windows.yml`): after pushing to main, download it from Actions; when you publish a release, `EmoKing-windows.zip` is uploaded to it automatically.
 
 ## License
 
