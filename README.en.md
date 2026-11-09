@@ -12,6 +12,15 @@ No smell, no hunting for a lighter, no standing outside in the wind. The whole a
 
 <img src="docs/demo.gif" width="340" alt="Demo: take a cigarette, light it, take a drag, exhale, flick the ash and stub it out">
 
+**Current version: v0.2.0** ([downloads / changelog](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest))
+
+| System | Download | Install | Open |
+|---|---|---|---|
+| Windows 10 / 11 | [EmoKing-windows.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-windows.zip) | Extract to any folder, nothing to install | Double-click `EmoKing.exe`; if blocked, click "More info → Run anyway" |
+| macOS 13+ | [EmoKing-macos.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-macos.zip) | Extract and drag `EmoKing.app` into Applications | Needs approval on first launch, see [Install in a minute](#install-in-a-minute) |
+
+**Using it on Windows:** the window appears in the bottom-right corner. Click the pack for a cigarette → click the lighter → hold the cigarette or Space to puff, release to exhale. Click the tip to flick ash, click the ashtray to stub it out, drag an object to move the window. Styles, hide, keep on top, smoke amount and quit: right-click the pack or lighter, or click the tray icon (it may be hidden under "^").
+
 ## Why you need one
 
 - **Stuck halfway through a bug?** Hold to take a drag, release to blow it out. The bug is still there, but you feel better.

@@ -12,6 +12,15 @@
 
 <img src="docs/demo.gif" width="340" alt="演示：拿烟、点烟、吸一口吐烟、抖灰、掐灭">
 
+**当前版本：v0.2.0**（[下载 / 更新日志](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest)）
+
+| 系统 | 下载 | 安装 | 打开 |
+|---|---|---|---|
+| Windows 10 / 11 | [EmoKing-windows.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-windows.zip) | 解压到任意文件夹，不用安装 | 双击 `EmoKing.exe`；被拦就点“更多信息 → 仍要运行” |
+| macOS 13+ | [EmoKing-macos.zip](https://github.com/Hugooooooo526/emokingOnlyMac/releases/latest/download/EmoKing-macos.zip) | 解压，把 `EmoKing.app` 拖进“应用程序” | 第一次需要放行，见[一分钟装好](#一分钟装好) |
+
+**Windows 怎么用：** 窗口出现在屏幕右下角。点烟盒拿烟 → 点打火机点上 → 按住烟或空格吸一口，松手吐烟；点烟头抖灰，点烟灰缸掐灭，拖动物件挪窗口。换款、隐藏、置顶、烟量、退出：右键烟盒或打火机，或点右下角托盘图标（可能收在“^”里）。
+
 ## 为什么你需要来一根
 
 - **Bug 改到一半？** 按住吸一口，松手吐出去。Bug 还在，但你好多了。
