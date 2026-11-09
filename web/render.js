@@ -11,9 +11,22 @@
   const HOLD = { x: 132, y: 338, a: 0.14 };
   const TRAY = { x: 118, y: 462, rx: 80, ry: 30 };
   const PACK = { x: 238, y: 404, w: 72, h: 96 };
-  const LIGHTER = { x: 206, y: 442, w: 24, h: 58 };
+  const LIGHTER = { x: 204, y: 451, w: 29, h: 49 };
   const LEVEL_RATE = [6, 12, 18];        // 烟头每秒出几团烟：少 / 标准 / 多
   const LEVEL_EXHALE = [0.6, 1, 1.4];
+  const PACK_STYLES = [
+    { face: ['#0e2e2b', '#1f5541', '#112e28'], filter: ['#cbd4ce', '#f4fcf6', '#9caea5'], band: '#238d57', speck: 'rgba(47,111,83,.2)', width: 1, label: drawLuckyStrike },
+    { face: ['#c4c6c5', '#f9f9f5', '#c7cbd0'], filter: ['#c6c5bd', '#faf9f3', '#a2a29b'], band: '#535761', speck: 'rgba(52,53,57,.15)', width: 1, label: drawSevenStars },
+    { face: ['#132b61', '#3973b6', '#132c64'], filter: ['#c4ccd2', '#fbfcfc', '#a6b2c5'], band: '#3b6fa8', speck: 'rgba(48,82,119,.18)', width: 0.9, label: drawMildSeven },
+    { face: ['#d9d8cf', '#fffdf7', '#bfbeb6'], filter: ['#b8783d', '#e7a961', '#94602f'], band: '#e8d8b9', speck: 'rgba(90,52,28,.52)', width: 1, label: drawMarlboro },
+    { face: ['#bb925e', '#f1deb2', '#bc9569'], filter: ['#bf954e', '#edc179', '#ad793b'], band: '#997141', speck: 'rgba(91,61,28,.47)', width: 0.95, label: drawCamel },
+  ];
+  const ZIPPO_STYLES = [
+    { shell: ['#626971', '#d0d6da', '#878e95'], edge: '#e6e9eb', ink: '#4b5058', grain: true },
+    { shell: ['#77531f', '#d9ae57', '#a87b31'], edge: '#f0cd7c', ink: '#65451c', grain: true },
+    { shell: ['#1c2025', '#3c4148', '#22262c'], edge: '#62676e', ink: '#babdc3' },
+    { shell: ['#530d18', '#d83848', '#7b1525'], edge: '#f77d85', ink: '#ffd0ce' },
+  ];
 
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -155,91 +168,180 @@
     }
   }
 
-  function drawPack(c) {
-    const { x, y, w, h } = PACK;
-    groundShadow(c, x + w / 2, y + h + 1, w * 0.72, 9);
-
-    // 露出来的滤嘴
-    for (let i = 0; i < 3; i++) {
-      const fx = x + 13 + i * 16.5;
-      const g = c.createLinearGradient(fx, 0, fx + 13, 0);
-      g.addColorStop(0, '#b67a3a');
-      g.addColorStop(0.5, '#e2ab68');
-      g.addColorStop(1, '#a86f33');
-      c.fillStyle = g;
-      roundRect(c, fx, y - 9, 13, 18, 3);
-      c.fill();
-    }
-
-    // 盒身
-    let g = c.createLinearGradient(x, 0, x + w, 0);
-    g.addColorStop(0, '#5c1420');
-    g.addColorStop(0.5, '#8a2233');
-    g.addColorStop(1, '#4a0f19');
-    c.fillStyle = g;
-    roundRect(c, x, y, w, h, 3);
-    c.fill();
-
-    // 翻盖开口
-    c.fillStyle = 'rgba(0,0,0,.35)';
-    c.fillRect(x, y, w, 3);
-    c.strokeStyle = 'rgba(0,0,0,.28)';
-    c.beginPath();
-    c.moveTo(x, y + 20); c.lineTo(x + w, y + 20);
-    c.stroke();
-
-    // 烟标
-    c.strokeStyle = '#d8b56a';
-    c.lineWidth = 1;
-    c.strokeRect(x + 7, y + 30, w - 14, 48);
-    c.fillStyle = '#d8b56a';
-    c.beginPath(); // 小皇冠
-    const cx = x + w / 2, cy = y + 49;
-    c.moveTo(cx - 11, cy);
-    c.lineTo(cx - 13, cy - 11);
-    c.lineTo(cx - 6, cy - 5);
-    c.lineTo(cx, cy - 13);
-    c.lineTo(cx + 6, cy - 5);
-    c.lineTo(cx + 13, cy - 11);
-    c.lineTo(cx + 11, cy);
-    c.closePath();
-    c.fill();
-    c.font = '600 10px -apple-system, "Helvetica Neue", sans-serif';
-    c.textAlign = 'center';
-    c.fillText('EMOKING', cx, y + 67);
+  function across(c, x, y, w, h, colors, middle = 0.48) {
+    const g = c.createLinearGradient(x, y, x + w, y + h);
+    g.addColorStop(0, colors[0]);
+    g.addColorStop(middle, colors[1]);
+    g.addColorStop(1, colors[2]);
+    return g;
   }
 
-  function drawLighterBody(c, x, y, wheelSpin) {
-    const { w, h } = LIGHTER;
-    let g = c.createLinearGradient(x, 0, x + w, 0);
-    g.addColorStop(0, '#0f6a6d');
-    g.addColorStop(0.45, '#25b1ad');
-    g.addColorStop(1, '#0c5558');
-    c.fillStyle = g;
-    roundRect(c, x, y + 13, w, h - 13, 3);
-    c.fill();
+  function caption(c, text, x, y, size, color) {
+    c.fillStyle = color;
+    c.font = `600 ${size}px sans-serif`;
+    c.textAlign = 'center';
+    c.fillText(text, x, y);
+  }
 
-    g = c.createLinearGradient(x, 0, x + w, 0);
-    g.addColorStop(0, '#80858d');
-    g.addColorStop(0.5, '#e3e6ea');
-    g.addColorStop(1, '#6f747c');
-    c.fillStyle = g;
-    roundRect(c, x + 2, y, w - 4, 14, [3, 3, 0, 0]);
-    c.fill();
-
-    c.fillStyle = '#4b4f55';
+  function polygon(c, color, points) {
+    c.fillStyle = color;
     c.beginPath();
-    c.arc(x + w - 7, y + 6, 4.2, 0, Math.PI * 2);
+    c.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) c.lineTo(points[i], points[i + 1]);
+    c.closePath();
     c.fill();
-    c.strokeStyle = '#c8ccd2';
-    c.lineWidth = 0.9;
-    for (let i = 0; i < 4; i++) {
-      const a = wheelSpin + i * Math.PI / 2;
+  }
+
+  function drawLuckyStrike(c) {
+    const green = '#84e29e';
+    for (const radius of [31, 26, 22]) {
+      c.strokeStyle = radius === 26 ? '#5fa79c' : '#73b77a';
+      c.lineWidth = radius === 22 ? 1.4 : 0.7;
       c.beginPath();
-      c.moveTo(x + w - 7, y + 6);
-      c.lineTo(x + w - 7 + Math.cos(a) * 4, y + 6 + Math.sin(a) * 4);
+      c.arc(36, 49, radius, 0, Math.PI * 2);
       c.stroke();
     }
+    c.strokeStyle = green;
+    c.lineWidth = 0.7;
+    for (const offset of [-1, 1]) {
+      c.beginPath();
+      c.moveTo(36 + offset * 21, 32);
+      c.lineTo(36 + offset * 30, 24);
+      c.lineTo(36 + offset * 30, 9);
+      c.stroke();
+    }
+    caption(c, 'LUCKY', 36, 47, 10, '#f8fcf8');
+    caption(c, 'STRIKE', 36, 59, 10, '#f8fcf8');
+    caption(c, 'ACTIVATE GREEN', 36, 89, 6.5, green);
+  }
+
+  function drawSevenStars(c) {
+    const ink = '#2e3137';
+    for (let i = 0; i < 7; i++) {
+      const points = [];
+      for (let j = 0; j < 10; j++) {
+        const angle = j * Math.PI / 5 - Math.PI / 2, r = j % 2 ? 1.6 : 3.4;
+        points.push(11.5 + i * 8.2 + r * Math.cos(angle), 37 + r * Math.sin(angle));
+      }
+      polygon(c, ink, points);
+    }
+    caption(c, 'Seven Stars', 36, 58, 11.5, ink);
+    c.fillStyle = '#a2a6ad';
+    c.fillRect(10, 67, 52, 1);
+    caption(c, 'CHARCOAL FILTER', 36, 81, 5.5, ink);
+  }
+
+  function drawMildSeven(c) {
+    c.strokeStyle = '#83c8e7';
+    c.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      c.beginPath();
+      c.moveTo(4, 49 + i * 5);
+      c.bezierCurveTo(26, 57 + i * 5, 35, 35 + i * 5, 68, 29 + i * 5);
+      c.stroke();
+    }
+    caption(c, 'MILD SEVEN', 36, 73, 10, '#ffffff');
+    caption(c, 'ORIGINAL BLUE', 36, 85, 6, '#dceffa');
+  }
+
+  function drawMarlboro(c) {
+    polygon(c, '#b82129', [1, 2, 71, 2, 71, 29, 36, 49, 1, 29]);
+    polygon(c, '#e04a49', [1, 2, 71, 2, 71, 8, 1, 8]);
+    caption(c, 'Marlboro', 36, 69, 13, '#201d19');
+    caption(c, 'RED', 36, 82, 7, '#8c1d22');
+  }
+
+  function drawCamel(c) {
+    caption(c, 'CAMEL', 36, 36, 14, '#234354');
+    polygon(c, '#d0aa6a', [8, 67, 27, 48, 44, 67]);
+    polygon(c, '#bc9355', [36, 67, 51, 52, 65, 67]);
+    polygon(c, '#695139', [15, 54, 20, 51, 25, 53, 29, 62, 35, 57, 43, 53, 49, 58,
+      54, 60, 56, 69, 51, 73, 51, 80, 48, 80, 47, 73, 35, 73, 32, 80, 29, 80,
+      30, 72, 25, 67, 21, 57, 15, 57]);
+    caption(c, 'FILTERS', 36, 91, 6, '#234354');
+  }
+
+  function drawPack(c, style) {
+    const { x, y, w, h } = PACK;
+    groundShadow(c, x + w / 2, y + h + 1, w * 0.72, 9);
+    c.save();
+    c.translate(x, y);
+    for (let i = 0; i < 3; i++) {
+      const fx = 13 + i * 16.5, width = 13 * style.width;
+      c.fillStyle = across(c, fx, 0, width, 0, style.filter);
+      roundRect(c, fx, -9, width, 18, 3);
+      c.fill();
+    }
+    c.fillStyle = across(c, 0, 0, w, 0, style.face);
+    roundRect(c, 0, 0, w, h, 3);
+    c.fill();
+    style.label(c);
+    c.fillStyle = 'rgba(0,0,0,.25)';
+    c.fillRect(3, 0, w - 6, 2);
+    c.fillRect(0, 18, w, 1);
+    c.restore();
+  }
+
+  function shellPanel(c, y, height, radii, style) {
+    const w = LIGHTER.w;
+    c.fillStyle = across(c, 0, 0, w, 0, style.shell);
+    roundRect(c, 0, y, w, height, radii);
+    c.fill();
+    if (style.grain) {
+      for (let i = 3; i < height - 2; i += 2) {
+        c.fillStyle = i % 3 === 0 ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.16)';
+        c.fillRect(2, y + i, w - 4, 0.48);
+      }
+    }
+    c.strokeStyle = style.edge;
+    c.lineWidth = 0.75;
+    c.stroke();
+  }
+
+  function drawLighterBody(c, x, y, lid, wheelSpin, style) {
+    const { w, h } = LIGHTER;
+    c.save();
+    c.translate(x, y);
+    if (lid > 0) {
+      // 防风罩、棉芯和火石轮在翻盖下面。
+      c.fillStyle = across(c, 5, 0, 13, 0, ['#686b6d', '#d9dce1', '#73777c']);
+      roundRect(c, 5, 1, 13, 16, [2, 2, 0, 0]);
+      c.fill();
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 3; col++) {
+          c.fillStyle = '#343237';
+          c.beginPath();
+          c.arc(7.8 + col * 3.7, 5 + row * 4, 1.05, 0, Math.PI * 2);
+          c.fill();
+        }
+      }
+      c.fillStyle = '#c7b38a';
+      c.fillRect(10.5, -1, 2, 3);
+      c.fillStyle = '#434447';
+      c.beginPath();
+      c.arc(w - 6, 9, 4.2, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = '#bec1c4';
+      c.lineWidth = 0.65;
+      for (let i = 0; i < 6; i++) {
+        const a = wheelSpin + i * Math.PI / 3;
+        c.beginPath();
+        c.moveTo(w - 6 + Math.cos(a) * 2.1, 9 + Math.sin(a) * 2.1);
+        c.lineTo(w - 6 + Math.cos(a) * 3.7, 9 + Math.sin(a) * 3.7);
+        c.stroke();
+      }
+    }
+    shellPanel(c, 15, h - 15, [0, 0, 4, 4], style);
+    caption(c, 'ZIPPO', w / 2, 39, 6, style.ink);
+    c.save();
+    c.translate(1, 15);
+    c.rotate(-lid * 2.3);
+    c.translate(-1, -15);
+    shellPanel(c, 0, 14.5, [4, 4, 0, 0], style);
+    c.restore();
+    c.fillStyle = style.ink;
+    c.fillRect(0, 13, 2, 4);
+    c.restore();
   }
 
   function drawFlame(c, x, y, T, glow) {
@@ -273,6 +375,8 @@
       this.smokeCtx = smoke.getContext('2d');
       this.sim = sim;
       this.level = 1;
+      this.packStyle = PACK_STYLES[0];
+      this.lighterStyle = ZIPPO_STYLES[0];
       this.smoke = [];
       this.outbox = [];
       this.nativeSmoke = false;
@@ -290,6 +394,15 @@
       this.ashJitter = Array.from({ length: 24 }, () => r());
       this.staticDirty = true;
       this.resize();
+    }
+
+    setStyles(pack, lighter) {
+      const nextPack = PACK_STYLES[pack] || PACK_STYLES[0];
+      const nextLighter = ZIPPO_STYLES[lighter] || ZIPPO_STYLES[0];
+      if (this.packStyle !== nextPack) this.staticDirty = true;
+      if (this.packStyle !== nextPack || this.lighterStyle !== nextLighter) this.midKey = '';
+      this.packStyle = nextPack;
+      this.lighterStyle = nextLighter;
     }
 
     resize() {
@@ -573,7 +686,7 @@
       c.clearRect(0, 0, this.layers.base.width, this.layers.base.height);
       c.setTransform(this.px, 0, 0, this.px, 0, 0);
       drawTray(c, this.sim.butts, this.sim.ashPile);
-      drawPack(c);
+      drawPack(c, this.packStyle);
       this.staticDirty = false;
     }
 
@@ -584,7 +697,8 @@
       const s = this.sim;
       const lit = s.phase === 'lit' || (s.phase === 'stubbing' && s.counted);
       const used = s.counted || s.burned > 0;
-      const rem = TOBACCO * (1 - s.burned), r = CIG_R;
+      const style = this.packStyle;
+      const rem = TOBACCO * (1 - s.burned), r = CIG_R * style.width;
       c.save();
       c.translate(p.x, p.y);
       c.rotate(p.a);
@@ -609,17 +723,13 @@
 
       // 滤嘴
       const fx = 1 + rem;
-      g = c.createLinearGradient(0, -r, 0, r);
-      g.addColorStop(0, '#b87d3e');
-      g.addColorStop(0.3, '#e9b676');
-      g.addColorStop(1, '#8e5d2a');
-      c.fillStyle = g;
+      c.fillStyle = across(c, 0, -r, 0, r * 2, style.filter, 0.3);
       c.fillRect(fx, -r, FILTER, r * 2);
-      c.fillStyle = 'rgba(92,56,24,.5)';
+      c.fillStyle = style.speck;
       for (let i = 0; i < 22; i++) {
         c.fillRect(fx + this.ashJitter[i] * (FILTER - 2), -r + this.ashJitter[(i + 7) % 24] * r * 2 - 0.5, 1.2, 1);
       }
-      c.fillStyle = '#d8b56a';
+      c.fillStyle = style.band;
       c.fillRect(fx, -r, 2, r * 2);
       c.fillStyle = '#d9c9ac';
       c.beginPath();
@@ -683,19 +793,20 @@
 
     drawLighter(c) {
       const s = this.sim;
-      let x = LIGHTER.x, y = LIGHTER.y, flame = false, spin = 0;
+      let x = LIGHTER.x, y = LIGHTER.y, flame = false, spin = 0, lid = 0;
       if (s.phase === 'lighting') {
         const t = clamp(s.t / window.EmoSim.TUNING.anim.lighting, 0, 1);
         const m = t < 0.28 ? ease(t / 0.28) : t > 0.8 ? 1 - ease((t - 0.8) / 0.2) : 1;
         const p = this.lastPose;
-        x = lerp(LIGHTER.x, p.x - 8, m);
-        y = lerp(LIGHTER.y, p.y + 26, m);
-        flame = t > 0.26 && t < 0.82;
+        x = lerp(LIGHTER.x, p.x - 11.5, m);
+        y = lerp(LIGHTER.y, p.y + 25, m);
+        lid = ease(clamp(Math.min(t / 0.24, (1 - t) / 0.16), 0, 1));
+        flame = t > 0.28 && t < 0.81;
         spin = t * 18;
       }
       groundShadow(c, LIGHTER.x + LIGHTER.w / 2, LIGHTER.y + LIGHTER.h + 1, 22, 6);
-      drawLighterBody(c, x, y, spin);
-      if (flame) drawFlame(c, x + 8, y + 1, this.T, this.glow);
+      drawLighterBody(c, x, y, lid, spin, this.lighterStyle);
+      if (flame) drawFlame(c, x + 11.5, y, this.T, this.glow);
     }
 
     drawSmoke(c) {

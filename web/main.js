@@ -16,36 +16,67 @@
   };
 
   const boot = window.__EMOKING_BOOT || {};
-  // Mac 外壳走 webkit，Windows 外壳走 Tauri，浏览器里两个都没有
-  const macBridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.native;
-  const tauri = window.__TAURI__;
-  const nativeBridge = macBridge || (tauri && { postMessage: (msg) => tauri.core.invoke('native', { msg }) });
+  const nativeBridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.native;
 
   function loadGame() {
     if (boot.game) return boot.game;
-    try { return JSON.parse(localStorage.getItem('emoking') || '{}'); } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('emoking') || '{}') || {}; } catch { return {}; }
   }
 
-  function saveGame(data) {
+  function saveGame() {
+    const data = { ...sim.snapshot(), ...styles };
     if (nativeBridge) nativeBridge.postMessage({ cmd: 'save', data });
     else try { localStorage.setItem('emoking', JSON.stringify(data)); } catch { /* 无痕模式 */ }
   }
 
-  const sim = new window.EmoSim.Sim({ saved: loadGame() });
+  const saved = loadGame();
+  const sim = new window.EmoSim.Sim({ saved });
   const canvas = document.getElementById('scene');
   const hintEl = document.getElementById('hint');
   const todayEl = document.getElementById('today');
+  const styleRoot = document.getElementById('styles');
+  const styleToggle = document.getElementById('style-toggle');
+  const stylePanel = document.getElementById('style-panel');
+  const styleButtons = Array.from(stylePanel.querySelectorAll('button'));
+  const styles = { cigaretteStyle: 0, lighterStyle: 0 };
   const scene = new window.EmoScene.Scene({
     base: document.getElementById('base'),
     mid: canvas,
     smoke: document.getElementById('smoke'),
   }, sim);
   scene.level = boot.smokeLevel ?? 1;
-  if (macBridge) {
+  for (const button of styleButtons) {
+    const field = button.dataset.style, index = Number(button.dataset.index);
+    if (saved[field] === index) styles[field] = index;
+    button.addEventListener('click', () => {
+      styles[field] = index;
+      applyStyles();
+      sim.syncDay();
+      kick();
+      saveGame();
+    });
+  }
+  applyStyles();
+  if (nativeBridge) {
     scene.nativeSmoke = true;
     scene.resize();
     nativeBridge.postMessage({ cmd: 'sprites', urls: scene.sprites.map((c) => c.toDataURL('image/png')) });
   }
+
+  function applyStyles() {
+    scene.setStyles(styles.cigaretteStyle, styles.lighterStyle);
+    for (const button of styleButtons) {
+      button.setAttribute('aria-pressed', String(styles[button.dataset.style] === Number(button.dataset.index)));
+    }
+  }
+
+  function openStyles(open) {
+    stylePanel.hidden = !open;
+    styleToggle.setAttribute('aria-expanded', String(open));
+    sendHitRects();
+  }
+
+  styleToggle.addEventListener('click', () => openStyles(stylePanel.hidden));
 
   // ---- 提示 ----
   let hintTimer = 0;
@@ -72,7 +103,7 @@
     for (const e of sim.drain()) {
       scene.onEvent(e);
       if (e.type === 'save') {
-        saveGame(sim.snapshot());
+        saveGame();
         todayEl.textContent = `今日 ${sim.count} 支`;
       } else if (e.type === 'hint') {
         showHint(e.key);
@@ -94,6 +125,11 @@
   function sendHitRects() {
     if (!nativeBridge) return;
     const rects = scene.hitRects();
+    for (const element of stylePanel.hidden ? [styleToggle] : [styleToggle, stylePanel]) {
+      const { left, top, right, bottom } = element.getBoundingClientRect();
+      const x = Math.floor(left / scene.scale), y = Math.floor(top / scene.scale);
+      rects.push({ x, y, w: Math.ceil(right / scene.scale) - x, h: Math.ceil(bottom / scene.scale) - y, drag: false });
+    }
     const key = JSON.stringify(rects);
     if (key === lastRects) return;
     lastRects = key;
@@ -110,9 +146,9 @@
     sim.step(dt);
     pump();
     scene.update(dt);
-    if (scene.outbox.length) macBridge.postMessage({ cmd: 'smoke', items: scene.takeOutbox() });
+    if (scene.outbox.length) nativeBridge.postMessage({ cmd: 'smoke', items: scene.takeOutbox() });
     scene.render();
-    const interval = macBridge && scene.calm() ? CALM_MS : FRAME_MS;
+    const interval = nativeBridge && scene.calm() ? CALM_MS : FRAME_MS;
     if (scene.busy()) setTimeout(frame, Math.max(0, interval - (performance.now() - now)));
     else running = false;
   }
@@ -127,7 +163,6 @@
 
   // ---- 输入 ----
   let press = null;
-  let pressAt = { x: 0, y: 0 };
 
   function toScene(ev) {
     const r = canvas.getBoundingClientRect();
@@ -139,30 +174,19 @@
 
   canvas.addEventListener('pointerdown', (ev) => {
     if (ev.button !== 0) return;
+    if (!stylePanel.hidden) openStyles(false);
     const p = toScene(ev);
     const item = scene.hitTest(p.x, p.y);
     if (!item) return;
     canvas.setPointerCapture(ev.pointerId);
     press = item;
-    pressAt = { x: ev.screenX, y: ev.screenY };
-    if (tauri) nativeBridge.postMessage({ cmd: 'press', down: true });
     if (item === 'cig') sim.pressCig();
     kick();
-  });
-
-  // Mac 的拖动在原生层处理；Windows 由这里判断，再交给系统拖窗口
-  canvas.addEventListener('pointermove', (ev) => {
-    if (!tauri || !['pack', 'lighter', 'tray'].includes(press)) return;
-    if (Math.hypot(ev.screenX - pressAt.x, ev.screenY - pressAt.y) <= 4) return;
-    press = null;
-    canvas.releasePointerCapture(ev.pointerId);
-    nativeBridge.postMessage({ cmd: 'drag' });
   });
 
   canvas.addEventListener('pointerup', (ev) => {
     const item = press;
     press = null;
-    if (tauri) nativeBridge.postMessage({ cmd: 'press', down: false });
     if (!item) return;
     if (item === 'cig') { sim.releaseCig(); kick(); return; }
     const p = toScene(ev);
@@ -177,20 +201,20 @@
   function cancelPress() {
     if (press === 'cig') sim.releaseCig();
     press = null;
-    if (tauri) nativeBridge.postMessage({ cmd: 'press', down: false });
     kick();
   }
 
   canvas.addEventListener('pointercancel', cancelPress);
   window.addEventListener('blur', () => { spaceDown = false; cancelPress(); });
-  window.addEventListener('contextmenu', (ev) => {
-    ev.preventDefault();
-    if (tauri) nativeBridge.postMessage({ cmd: 'menu' });
-  });
+  window.addEventListener('contextmenu', (ev) => ev.preventDefault());
 
   let spaceDown = false;
   window.addEventListener('keydown', (ev) => {
-    if (ev.code !== 'Space') return;
+    if (ev.code === 'Escape' && !stylePanel.hidden) {
+      openStyles(false);
+      styleToggle.focus();
+    }
+    if (ev.code !== 'Space' || styleRoot.contains(document.activeElement)) return;
     ev.preventDefault();
     if (ev.repeat || spaceDown) return;
     spaceDown = true;
@@ -198,13 +222,13 @@
     kick();
   });
   window.addEventListener('keyup', (ev) => {
-    if (ev.code !== 'Space') return;
+    if (ev.code !== 'Space' || !spaceDown) return;
     spaceDown = false;
     sim.releaseCig();
     kick();
   });
 
-  window.addEventListener('resize', () => { scene.resize(); scene.render(); });
+  window.addEventListener('resize', () => { scene.resize(); scene.render(); sendHitRects(); });
   document.addEventListener('visibilitychange', () => setPaused(document.hidden));
 
   function setPaused(value) {

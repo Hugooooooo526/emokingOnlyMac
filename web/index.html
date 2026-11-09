@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:">
 <title>吸烟模拟器</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -13,6 +13,30 @@
 <canvas id="smoke"></canvas>
 <div id="hint" role="status"></div>
 <div id="today"></div>
+<div id="styles">
+  <button id="style-toggle" type="button" aria-controls="style-panel" aria-expanded="false">外观 <span aria-hidden="true">▾</span></button>
+  <section id="style-panel" aria-label="外观设置" hidden>
+    <fieldset>
+      <legend>香烟款式</legend>
+      <div class="style-options">
+        <button type="button" data-style="cigaretteStyle" data-index="0">绿拉</button>
+        <button type="button" data-style="cigaretteStyle" data-index="1">七星白盒</button>
+        <button type="button" data-style="cigaretteStyle" data-index="2">柔和七星蓝</button>
+        <button type="button" data-style="cigaretteStyle" data-index="3">红万宝路</button>
+        <button type="button" data-style="cigaretteStyle" data-index="4">经典骆驼</button>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Zippo 款式</legend>
+      <div class="style-options">
+        <button type="button" data-style="lighterStyle" data-index="0">拉丝银</button>
+        <button type="button" data-style="lighterStyle" data-index="1">复古黄铜</button>
+        <button type="button" data-style="lighterStyle" data-index="2">哑光黑</button>
+        <button type="button" data-style="lighterStyle" data-index="3">糖果红</button>
+      </div>
+    </fieldset>
+  </section>
+</div>
 <script src="sim.js"></script>
 <script src="render.js"></script>
 <script src="main.js"></script>

@@ -17,6 +17,7 @@ lipo -create dist/EmoKing-arm64 dist/EmoKing-x86_64 -output "$APP/Contents/MacOS
 rm dist/EmoKing-arm64 dist/EmoKing-x86_64
 
 cp native/Info.plist "$APP/Contents/Info.plist"
+cp LICENSE "$APP/Contents/Resources/LICENSE"
 cp web/index.html web/style.css web/sim.js web/render.js web/main.js "$APP/Contents/Resources/web/"
 [ -f native/AppIcon.icns ] && cp native/AppIcon.icns "$APP/Contents/Resources/"
 
