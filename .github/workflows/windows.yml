@@ -1,18 +1,40 @@
 name: Windows build
 
+# 推到 main 或手动运行：在本次运行的 Artifacts 里下载 EmoKing-windows
+# 在网页上发布 Release：自动把 EmoKing-windows.zip 上传到这个 Release
 on:
   workflow_dispatch:
   push:
-    branches: [windows]
+    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo build --release
-        working-directory: src-tauri
+
+      - name: Build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force pkg/EmoKing | Out-Null
+          .\windows\build.ps1 -Output (Join-Path (Get-Location) 'pkg/EmoKing/EmoKing.exe')
+          Copy-Item LICENSE pkg/EmoKing/LICENSE.txt
+          Compress-Archive -Path pkg/EmoKing -DestinationPath EmoKing-windows.zip -Force
+          Get-FileHash EmoKing-windows.zip -Algorithm SHA256 | Format-List
+
       - uses: actions/upload-artifact@v4
         with:
           name: EmoKing-windows
-          path: src-tauri/target/release/emoking.exe
+          path: pkg/
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" EmoKing-windows.zip --clobber
