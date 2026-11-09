@@ -77,6 +77,19 @@ Things you'll find out sooner or later:
 - Smoke amount has three levels. Set it to the highest (多) for the full fog.
 - Hiding the window pauses the animation and the burning, so you can pick up where you left off.
 
+## Changelog
+
+### v0.1.1
+
+- **Smoke fixed:** smoke from the tip now starts as a thin wisp and spreads out as it rises. In v0.1.0 every puff appeared at full size; now it grows over time.
+- **Easier to get the window back:** if the window is hidden, open the app again (double-click, Spotlight or `open`) and the window comes back, without starting a second copy.
+- **Direct download:** the release includes a prebuilt `EmoKing-macos.zip`, so you don't have to build it yourself.
+- Added a demo GIF and this English README.
+
+### v0.1.0
+
+- First release: transparent floating window, take a cigarette, light it, puff and exhale, three smoke levels, flicking ash, stubbing out, auto-extinguish, daily count.
+
 ## Acceptance results
 
 Tested on an Apple M5 with macOS 27.
