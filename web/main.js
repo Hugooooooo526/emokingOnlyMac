@@ -16,7 +16,10 @@
   };
 
   const boot = window.__EMOKING_BOOT || {};
-  const nativeBridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.native;
+  // Mac 外壳走 webkit，Windows 外壳走 Tauri，浏览器里两个都没有
+  const macBridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.native;
+  const tauri = window.__TAURI__;
+  const nativeBridge = macBridge || (tauri && { postMessage: (msg) => tauri.core.invoke('native', { msg }) });
 
   function loadGame() {
     if (boot.game) return boot.game;
@@ -38,7 +41,7 @@
     smoke: document.getElementById('smoke'),
   }, sim);
   scene.level = boot.smokeLevel ?? 1;
-  if (nativeBridge) {
+  if (macBridge) {
     scene.nativeSmoke = true;
     scene.resize();
     nativeBridge.postMessage({ cmd: 'sprites', urls: scene.sprites.map((c) => c.toDataURL('image/png')) });
@@ -107,9 +110,9 @@
     sim.step(dt);
     pump();
     scene.update(dt);
-    if (scene.outbox.length) nativeBridge.postMessage({ cmd: 'smoke', items: scene.takeOutbox() });
+    if (scene.outbox.length) macBridge.postMessage({ cmd: 'smoke', items: scene.takeOutbox() });
     scene.render();
-    const interval = nativeBridge && scene.calm() ? CALM_MS : FRAME_MS;
+    const interval = macBridge && scene.calm() ? CALM_MS : FRAME_MS;
     if (scene.busy()) setTimeout(frame, Math.max(0, interval - (performance.now() - now)));
     else running = false;
   }
@@ -124,6 +127,7 @@
 
   // ---- 输入 ----
   let press = null;
+  let pressAt = { x: 0, y: 0 };
 
   function toScene(ev) {
     const r = canvas.getBoundingClientRect();
@@ -140,13 +144,25 @@
     if (!item) return;
     canvas.setPointerCapture(ev.pointerId);
     press = item;
+    pressAt = { x: ev.screenX, y: ev.screenY };
+    if (tauri) nativeBridge.postMessage({ cmd: 'press', down: true });
     if (item === 'cig') sim.pressCig();
     kick();
+  });
+
+  // Mac 的拖动在原生层处理；Windows 由这里判断，再交给系统拖窗口
+  canvas.addEventListener('pointermove', (ev) => {
+    if (!tauri || !['pack', 'lighter', 'tray'].includes(press)) return;
+    if (Math.hypot(ev.screenX - pressAt.x, ev.screenY - pressAt.y) <= 4) return;
+    press = null;
+    canvas.releasePointerCapture(ev.pointerId);
+    nativeBridge.postMessage({ cmd: 'drag' });
   });
 
   canvas.addEventListener('pointerup', (ev) => {
     const item = press;
     press = null;
+    if (tauri) nativeBridge.postMessage({ cmd: 'press', down: false });
     if (!item) return;
     if (item === 'cig') { sim.releaseCig(); kick(); return; }
     const p = toScene(ev);
@@ -161,12 +177,16 @@
   function cancelPress() {
     if (press === 'cig') sim.releaseCig();
     press = null;
+    if (tauri) nativeBridge.postMessage({ cmd: 'press', down: false });
     kick();
   }
 
   canvas.addEventListener('pointercancel', cancelPress);
   window.addEventListener('blur', () => { spaceDown = false; cancelPress(); });
-  window.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  window.addEventListener('contextmenu', (ev) => {
+    ev.preventDefault();
+    if (tauri) nativeBridge.postMessage({ cmd: 'menu' });
+  });
 
   let spaceDown = false;
   window.addEventListener('keydown', (ev) => {
